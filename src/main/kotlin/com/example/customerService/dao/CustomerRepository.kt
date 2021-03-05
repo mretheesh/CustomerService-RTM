@@ -6,5 +6,5 @@ import org.springframework.stereotype.Repository
 
 @Repository
 interface CustomerRepository: CrudRepository<Customer, Long>{
-
+    fun searchCustomerByCustomerName(name: String): Collection<Customer?>?
 }

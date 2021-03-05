@@ -14,13 +14,8 @@ import java.util.*
 
 @Service
 class CustomerService(private val repository: CustomerRepository, private val client: ProfileClient) {
-    fun getCustomerById(customerId: Long): Customer {
-        val optional: Optional<Customer> = repository.findById(customerId);
-        if(optional.isPresent){
-            return optional.get()
-        }
-        //throw exception
-        return Customer(123,"","", 32);
+    fun getCustomerById(customerId: Long): Optional<Customer> {
+        return repository.findById(customerId);
     }
     fun createCustomer(customer: Customer): Customer {
         if ((customer.customerAge?:0) < 18) {
@@ -29,9 +24,30 @@ class CustomerService(private val repository: CustomerRepository, private val cl
         customer.customerProfile = client.getCustomerProfile().name;
         return repository.save(customer);
     }
-    fun deleteCustomer(customerId: Long) {
-        repository.deleteById(customerId);
+    fun deleteCustomer(customerId: Long) : Boolean{
+        return if(repository.existsById(customerId)){
+            repository.deleteById(customerId);
+            true
+        } else {
+            false;
+        }
     }
+    fun updateCustomer(customer: Customer): Customer?{
+        var optional: Optional<Customer> = repository.findById(customer.customerId?:0);
+        if (optional.isPresent) {
+            var existingCustomer : Customer = optional.get()
+            existingCustomer.customerName = customer.customerName
+            existingCustomer.customerAge = customer.customerAge
+            existingCustomer.customerProfile = customer.customerProfile
+            return repository.save(existingCustomer);
+        }
+        return null;
+    }
+
+    fun searchCustomer(customerName: String): Collection<Customer?>? {
+        return repository.searchCustomerByCustomerName(customerName)
+    }
+
     @ControllerAdvice
     class ControllerAdviceRequestError : ResponseEntityExceptionHandler() {
         @ExceptionHandler(value = [(CustomerNotEligibleException::class)])
